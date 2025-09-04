@@ -19,7 +19,7 @@ def search_movie(query):
     if response.status_code == 200:
         data = response.json()
         if data["results"]:
-            return data["results"][0]
+            return data["results"][0]  # only top 1 result
     return None
 
 # --- /start handler ---
@@ -36,8 +36,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         overview = movie.get("overview", "No Description Available.")
         poster_path = movie.get("poster_path")
         poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else None
+
+        # Dynamic download link based on title
         download_link = f"https://newzbysms.com/?s={'+'.join(title.split())}"
-        caption = f"🎬 *{title}*\n\n📝 {overview}\n\n🔗 [Download Here]({download_link})"
+
+        caption = (
+            f"🎬 *{title}*\n\n"
+            f"📝 {overview}\n\n"
+            f"🔗 [Download Here]({download_link})"
+        )
 
         if poster_url:
             await update.message.reply_photo(
@@ -45,11 +52,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 caption=caption,
                 parse_mode="Markdown",
                 reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("🔗 Download from Newzbysms", url=download_link)]
+                    [InlineKeyboardButton(f"🔗 Download {title}", url=download_link)]
                 ])
             )
         else:
-            await update.message.reply_text(caption, parse_mode="Markdown")
+            await update.message.reply_text(
+                caption,
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(f"🔗 Download {title}", url=download_link)]
+                ])
+            )
     else:
         await update.message.reply_text("😔 Sorry, movie not found.")
 
